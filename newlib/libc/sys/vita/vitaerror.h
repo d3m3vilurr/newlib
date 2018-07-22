@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 #ifndef _VITAERROR_H_
 #define _VITAERROR_H_
 
-inline int __vita_sce_errno_to_errno(int sce_errno);
+int __vita_sce_errno_to_errno(int sce_errno);
 
 #endif // _VITAERROR_H_
 
