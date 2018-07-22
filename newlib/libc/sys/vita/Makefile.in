@@ -73,7 +73,7 @@ am_lib_a_OBJECTS = lib_a-syscalls.$(OBJEXT) lib_a-sbrk.$(OBJEXT) \
 	lib_a-threading.$(OBJEXT) lib_a-mlock.$(OBJEXT) \
 	lib_a-io.$(OBJEXT) lib_a-socket.$(OBJEXT) lib_a-dup.$(OBJEXT) \
 	lib_a-select.$(OBJEXT) lib_a-netdb.$(OBJEXT) \
-	lib_a-dirent.$(OBJEXT)
+	lib_a-error.$(OBJEXT) lib_a-dirent.$(OBJEXT)
 lib_a_OBJECTS = $(am_lib_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp =
@@ -317,6 +317,12 @@ lib_a-netdb.o: netdb.c
 
 lib_a-netdb.obj: netdb.c
 	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_a_CFLAGS) $(CFLAGS) -c -o lib_a-netdb.obj `if test -f 'netdb.c'; then $(CYGPATH_W) 'netdb.c'; else $(CYGPATH_W) '$(srcdir)/netdb.c'; fi`
+
+lib_a-error.o: error.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_a_CFLAGS) $(CFLAGS) -c -o lib_a-error.o `test -f 'error.c' || echo '$(srcdir)/'`error.c
+
+lib_a-error.obj: error.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_a_CFLAGS) $(CFLAGS) -c -o lib_a-error.obj `if test -f 'error.c'; then $(CYGPATH_W) 'error.c'; else $(CYGPATH_W) '$(srcdir)/error.c'; fi`
 
 lib_a-dirent.o: dirent.c
 	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_a_CFLAGS) $(CFLAGS) -c -o lib_a-dirent.o `test -f 'dirent.c' || echo '$(srcdir)/'`dirent.c
