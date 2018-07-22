@@ -27,7 +27,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "vitaerror.h"
 
-int __vita_sce_errno_to_errno(int sce_errno)
+inline int __vita_sce_errno_to_errno(int sce_errno)
 {
 	switch (sce_errno)
 	{
