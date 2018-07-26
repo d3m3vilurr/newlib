@@ -201,5 +201,4 @@ int __vita_sce_errno_to_errno(int sce_errno)
 		default:
 			return EINVAL;
 	}
-
-
+}
