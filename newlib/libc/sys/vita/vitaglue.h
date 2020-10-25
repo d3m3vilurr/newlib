@@ -1,6 +1,7 @@
 /*
 
 Copyright (C) 2016, David "Davee" Morgan
+Copyright (C) 2020, vitasdk
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -30,5 +31,6 @@ DEALINGS IN THE SOFTWARE.
 extern int __attribute__((weak)) __vita_glue_socket_close(SceUID scefd);
 extern int __attribute__((weak)) __vita_glue_socket_recv(SceUID scefd, void *buf, size_t len, int flags);
 extern int __attribute__((weak)) __vita_glue_socket_send(SceUID scefd, const void *buf, size_t len, int flags);
+extern int __attribute__((weak)) __vita_glue_epoll_close(SceUID scefd);
 
 #endif // _VITAGLUE_H_

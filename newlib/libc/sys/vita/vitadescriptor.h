@@ -1,6 +1,7 @@
 /*
 
 Copyright (C) 2016, David "Davee" Morgan
+Copyright (C) 2020, vitasdk
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -32,7 +33,8 @@ typedef enum
 {
 	VITA_DESCRIPTOR_FILE,
 	VITA_DESCRIPTOR_SOCKET,
-	VITA_DESCRIPTOR_TTY
+	VITA_DESCRIPTOR_TTY,
+	VITA_DESCRIPTOR_EPOLL,
 } DescriptorTypes;
 
 typedef struct
