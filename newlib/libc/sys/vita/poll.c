@@ -163,8 +163,8 @@ finally:
 			break;
 
 		// TODO: improve - this is very crude
-		sceKernelDelayThread(100);
-		elapsed_time += 100;
+		sceKernelDelayThread(10000);
+		elapsed_time += 10;
 	}
 
 	return selected;
