@@ -107,15 +107,14 @@ int poll(struct pollfd *fds, nfds_t nfds, int timeout)
 		for (int i = 0; i < nfds; ++i) {
 			struct pollfd *fd = &fds[i];
 
+			fd->revents = 0;
+
 			// The field fd contains a file descriptor for an open file. If this
 			// field is negative, then the corresponding events field is ignored and
 			// the revents field returns zero.
 			if (fd->fd < 0) {
-				fd->revents = 0;
 				continue;
 			}
-
-			fd->revents = 0;
 
 			DescriptorTranslation *f = __vita_fd_grab(fd->fd);
 
@@ -124,7 +123,6 @@ int poll(struct pollfd *fds, nfds_t nfds, int timeout)
 				errno = EBADF;
 				return -1;
 			}
-
 
 			int ret = 0;
 
