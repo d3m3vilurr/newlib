@@ -24,6 +24,7 @@ DEALINGS IN THE SOFTWARE.
 */
 #include <errno.h>
 #include <poll.h>
+#include <string.h>
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/net/net.h>
 #include <psp2/types.h>
@@ -45,16 +46,25 @@ static int poll_peek_socket(DescriptorTranslation *f, unsigned int evt)
 	SceNetEpollEvent event = { 0 };
 
 	event.events = evt;
-	sceNetEpollControl(eid, SCE_NET_EPOLL_CTL_ADD, f->sce_uid, &event);
-
-	memset(&event, 0, sizeof(SceNetEpollEvent));
-	if (sceNetEpollWait(eid, &event, 1, 0) <= 0) {
-		return 0;
+	int ret = sceNetEpollControl(eid, SCE_NET_EPOLL_CTL_ADD, f->sce_uid, &event);
+	if (ret < 0) {
+		errno = __vita_sce_errno_to_errno(eid);
+		goto exit;
 	}
 
-	sceNetEpollDestroy(eid);
+	memset(&event, 0, sizeof(SceNetEpollEvent));
+	ret = sceNetEpollWait(eid, &event, 1, 0);
+	if (ret < 0) {
+		errno = __vita_sce_errno_to_errno(eid);
+		goto exit;
+	}
 
-	int ret = 0;
+exit:
+	sceNetEpollDestroy(eid);
+	if (ret < 0)
+		return -1;
+	ret = 0;
+
 	if (event.events & SCE_NET_EPOLLIN)
 		ret |= POLLIN;
 	if (event.events & SCE_NET_EPOLLOUT)
