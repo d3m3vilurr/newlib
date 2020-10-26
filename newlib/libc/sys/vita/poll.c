@@ -47,8 +47,10 @@ static int poll_peek_socket(DescriptorTranslation *f, unsigned int evt)
 	event.events = evt;
 	sceNetEpollControl(eid, SCE_NET_EPOLL_CTL_ADD, f->sce_uid, &event);
 
-	event.events = 0;
-	sceNetEpollWait(eid, &event, 1, 0);
+	memset(&event, 0, sizeof(SceNetEpollEvent));
+	if (sceNetEpollWait(eid, &event, 1, 0) <= 0) {
+		return 0;
+	}
 
 	sceNetEpollDestroy(eid);
 
@@ -126,26 +128,23 @@ int poll(struct pollfd *fds, nfds_t nfds, int timeout)
 
 			int ret = 0;
 
-#define CHECK_POLL(fd, func, evt) 				\
-	do { 							\
-		if ((fd->events & (evt)) == 0) 			\
-			break; 					\
-		ret = func(f); 					\
-		if (ret < 0) 					\
-			goto finally; 				\
-		fd->revents |= ret;				\
-	} while(0)
-
-#define CHECK_POLL_IN(fd) CHECK_POLL(fd, is_pollin_ready, POLLIN)
-#define CHECK_POLL_OUT(fd) CHECK_POLL(fd, is_pollout_ready, POLLOUT)
-
 			// There is data to be read.
-			CHECK_POLL_IN(fd);
+			if (fd->events & POLLIN) {
+				ret = is_pollin_ready(f);
+				if (ret < 0)
+					goto finally;
+				fd->revents |= ret;
+			}
 
 			// Writing is now possible, though a write larger than available
 			// space in a socket or pipe will still block (unless O_NONBLOCK
 			// is set).
-			CHECK_POLL_OUT(fd);
+			if (fd->events & POLLOUT) {
+				ret = is_pollout_ready(f);
+				if (ret < 0)
+					goto finally;
+				fd->revents |= ret;
+			}
 
 finally:
 			__vita_fd_drop(f);
@@ -161,8 +160,8 @@ finally:
 			break;
 
 		// TODO: improve - this is very crude
-		sceKernelDelayThread(10000);
-		elapsed_time += 10;
+		sceKernelDelayThread(100000);
+		elapsed_time += 100;
 	}
 
 	return selected;
