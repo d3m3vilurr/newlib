@@ -36,26 +36,34 @@ static int poll_peek_socket(DescriptorTranslation *f, unsigned int evt)
 	if (evt == 0)
 		return 0;
 
-	SceNetEpollEvent event = { 0 };
-
 	int eid = sceNetEpollCreate("poll", 0);
-	if (eid < -1) {
+	if (eid < 0) {
 		errno = __vita_sce_errno_to_errno(eid);
 		return -1;
 	}
 
-	event.events = evt;
+	SceNetEpollEvent event = { 0 };
 
+	event.events = evt;
 	sceNetEpollControl(eid, SCE_NET_EPOLL_CTL_ADD, f->sce_uid, &event);
+
+	event.events = 0;
 	sceNetEpollWait(eid, &event, 1, 0);
+
 	sceNetEpollDestroy(eid);
 
-	return event.events & evt;
+	int ret = 0;
+	if (event.events & SCE_NET_EPOLLIN)
+		ret |= POLLIN;
+	if (event.events & SCE_NET_EPOLLOUT)
+		ret |= POLLOUT;
+	if (event.events & SCE_NET_EPOLLERR)
+		ret |= POLLERR;
+	return ret;
 }
 
 #define POLL_PEEK_IN_SOCKET(f) poll_peek_socket(f, SCE_NET_EPOLLIN)
 #define POLL_PEEK_OUT_SOCKET(f) poll_peek_socket(f, SCE_NET_EPOLLOUT)
-#define POLL_PEEK_ERR_SOCKET(f) poll_peek_socket(f, SCE_NET_EPOLLERR)
 
 static int is_pollin_ready(DescriptorTranslation *f)
 {
@@ -78,22 +86,6 @@ static int is_pollout_ready(DescriptorTranslation *f)
 	switch (f->type) {
 		case VITA_DESCRIPTOR_SOCKET:
 			return POLL_PEEK_OUT_SOCKET(f);
-		//case VITA_DESCRIPTOR_PIPE:
-		//	return 0;
-		case VITA_DESCRIPTOR_TTY:
-		case VITA_DESCRIPTOR_FILE:
-			return 0;
-		default:
-			// TODO: error?
-			return 0;
-	}
-}
-
-static int is_pollerr_ready(DescriptorTranslation *f)
-{
-	switch (f->type) {
-		case VITA_DESCRIPTOR_SOCKET:
-			return POLL_PEEK_ERR_SOCKET(f);
 		//case VITA_DESCRIPTOR_PIPE:
 		//	return 0;
 		case VITA_DESCRIPTOR_TTY:
@@ -136,21 +128,18 @@ int poll(struct pollfd *fds, nfds_t nfds, int timeout)
 
 			int ret = 0;
 
-#define CHECK_POLL(fd, func, evt) 		\
-	do { 					\
-		if ((fd->events & (evt)) == 0) 	\
-			break; 			\
-		ret = func(f); 			\
-		if (ret < 0) 			\
-			goto finally; 		\
-		if (ret) { 			\
-			fd->revents |= (evt); 	\
-		} 				\
+#define CHECK_POLL(fd, func, evt) 				\
+	do { 							\
+		if ((fd->events & (evt)) == 0) 			\
+			break; 					\
+		ret = func(f); 					\
+		if (ret < 0) 					\
+			goto finally; 				\
+		fd->revents |= ret;				\
 	} while(0)
 
 #define CHECK_POLL_IN(fd) CHECK_POLL(fd, is_pollin_ready, POLLIN)
 #define CHECK_POLL_OUT(fd) CHECK_POLL(fd, is_pollout_ready, POLLOUT)
-#define CHECK_POLL_ERR(fd) CHECK_POLL(fd, is_pollerr_ready, POLLERR)
 
 			// There is data to be read.
 			CHECK_POLL_IN(fd);
@@ -159,7 +148,6 @@ int poll(struct pollfd *fds, nfds_t nfds, int timeout)
 			// space in a socket or pipe will still block (unless O_NONBLOCK
 			// is set).
 			CHECK_POLL_OUT(fd);
-			CHECK_POLL_ERR(fd);
 
 finally:
 			__vita_fd_drop(f);
